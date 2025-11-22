@@ -1,0 +1,448 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>WhatsApp Multi-Session Dashboard | Metronic 8</title>
+    <link rel="shortcut icon" href="assets/media/logos/favicon.ico" />
+    
+    <!-- Metronic 8 Fonts -->
+    <link rel="stylesheet" href="https://fonts.googleapis.com/css?family=Inter:300,400,500,600,700" />
+    
+    <!-- Metronic 8 Global Plugins Bundle -->
+    <link href="assets/plugins/global/plugins.bundle.css" rel="stylesheet" type="text/css" />
+    
+    <!-- Metronic 8 Global Styles Bundle -->
+    <link href="assets/css/style.bundle.css" rel="stylesheet" type="text/css" />
+    
+    <!-- Custom Styles for WhatsApp -->
+    <style>
+        .qr-code canvas { display: block !important; margin: 0 auto; }
+        .session-badge { font-size: 0.85rem; padding: 0.35rem 0.75rem; }
+        .pairing-code-text { font-size: 2rem; font-weight: 700; letter-spacing: 8px; color: #009ef7; }
+        .whatsapp-color { background-color: #25D366 !important; }
+        .status-dot-connected { width: 10px; height: 10px; background: #50cd89; border-radius: 50%; display: inline-block; animation: pulse 2s infinite; }
+        .status-dot-disconnected { width: 10px; height: 10px; background: #f1416c; border-radius: 50%; display: inline-block; }
+        @keyframes pulse { 0%, 100% { opacity: 1; } 50% { opacity: 0.5; } }
+    </style>
+</head>
+<body id="kt_app_body" data-kt-app-layout="dark-sidebar" data-kt-app-header-fixed="true" data-kt-app-sidebar-enabled="true" data-kt-app-sidebar-fixed="true" data-kt-app-sidebar-hoverable="true" data-kt-app-sidebar-push-header="true" data-kt-app-sidebar-push-toolbar="true" data-kt-app-sidebar-push-footer="true" data-kt-app-toolbar-enabled="true" class="app-default">
+    
+    <!--begin::App-->
+    <div class="d-flex flex-column flex-root app-root" id="kt_app_root">
+        <!--begin::Page-->
+        <div class="app-page flex-column flex-column-fluid" id="kt_app_page">
+            
+            <!--begin::Header-->
+            <div id="kt_app_header" class="app-header">
+                <!--begin::Header container-->
+                <div class="app-container container-fluid d-flex align-items-stretch justify-content-between">
+                    <!--begin::Sidebar mobile toggle-->
+                    <div class="d-flex align-items-center d-lg-none ms-n3 me-1 me-md-2" title="Show sidebar menu">
+                        <div class="btn btn-icon btn-active-color-primary w-35px h-35px" id="kt_app_sidebar_mobile_toggle">
+                            <span class="svg-icon svg-icon-2 svg-icon-md-1">
+                                <svg width="24" height="24" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                                    <path d="M21 7H3C2.4 7 2 6.6 2 6V4C2 3.4 2.4 3 3 3H21C21.6 3 22 3.4 22 4V6C22 6.6 21.6 7 21 7Z" fill="currentColor"/>
+                                    <path opacity="0.3" d="M21 14H3C2.4 14 2 13.6 2 13V11C2 10.4 2.4 10 3 10H21C21.6 10 22 10.4 22 11V13C22 13.6 21.6 14 21 14ZM22 20V18C22 17.4 21.6 17 21 17H3C2.4 17 2 17.4 2 18V20C2 20.6 2.4 21 3 21H21C21.6 21 22 20.6 22 20Z" fill="currentColor"/>
+                                </svg>
+                            </span>
+                        </div>
+                    </div>
+                    <!--end::Sidebar mobile toggle-->
+                    
+                    <!--begin::Mobile logo-->
+                    <div class="d-flex align-items-center flex-grow-1 flex-lg-grow-0">
+                        <a href="index.html" class="d-lg-none">
+                            <img alt="Logo" src="assets/media/logos/default-small.svg" class="h-30px" />
+                        </a>
+                    </div>
+                    <!--end::Mobile logo-->
+                    
+                    <!--begin::Header wrapper-->
+                    <div class="d-flex align-items-stretch justify-content-between flex-lg-grow-1" id="kt_app_header_wrapper">
+                        <!--begin::Menu wrapper-->
+                        <div class="app-header-menu app-header-mobile-drawer align-items-stretch" data-kt-drawer="true" data-kt-drawer-name="app-header-menu" data-kt-drawer-activate="{default: true, lg: false}" data-kt-drawer-overlay="true" data-kt-drawer-width="250px" data-kt-drawer-direction="end" data-kt-drawer-toggle="#kt_app_header_menu_toggle" data-kt-swapper="true" data-kt-swapper-mode="{default: 'append', lg: 'prepend'}" data-kt-swapper-parent="{default: '#kt_app_body', lg: '#kt_app_header_wrapper'}">
+                            <!--begin::Menu-->
+                            <div class="menu menu-rounded menu-column menu-lg-row my-5 my-lg-0 align-items-stretch fw-semibold px-2 px-lg-0" id="kt_app_header_menu" data-kt-menu="true">
+                                <div class="menu-item me-0 me-lg-2">
+                                    <span class="menu-link">
+                                        <span class="menu-title">WhatsApp Multi-Session Dashboard</span>
+                                    </span>
+                                </div>
+                            </div>
+                            <!--end::Menu-->
+                        </div>
+                        <!--end::Menu wrapper-->
+                        
+                        <!--begin::Navbar-->
+                        <div class="app-navbar flex-shrink-0">
+                            <!--begin::User menu-->
+                            <div class="app-navbar-item ms-1 ms-md-3" id="kt_header_user_menu_toggle">
+                                <!--begin::Menu wrapper-->
+                                <div class="cursor-pointer symbol symbol-35px symbol-md-40px" data-kt-menu-trigger="{default: 'click', lg: 'hover'}" data-kt-menu-attach="parent" data-kt-menu-placement="bottom-end">
+                                    <img src="assets/media/avatars/300-1.jpg" alt="user" />
+                                </div>
+                                <!--end::Menu wrapper-->
+                            </div>
+                            <!--end::User menu-->
+                        </div>
+                        <!--end::Navbar-->
+                    </div>
+                    <!--end::Header wrapper-->
+                </div>
+                <!--end::Header container-->
+            </div>
+            <!--end::Header-->
+            
+            <!--begin::Wrapper-->
+            <div class="app-wrapper flex-column flex-row-fluid" id="kt_app_wrapper">
+                
+                <!--begin::Sidebar-->
+                <div id="kt_app_sidebar" class="app-sidebar flex-column" data-kt-drawer="true" data-kt-drawer-name="app-sidebar" data-kt-drawer-activate="{default: true, lg: false}" data-kt-drawer-overlay="true" data-kt-drawer-width="225px" data-kt-drawer-direction="start" data-kt-drawer-toggle="#kt_app_sidebar_mobile_toggle">
+                    <!--begin::Logo-->
+                    <div class="app-sidebar-logo px-6" id="kt_app_sidebar_logo">
+                        <!--begin::Logo image-->
+                        <a href="index.html">
+                            <img alt="Logo" src="assets/media/logos/default-dark.svg" class="h-25px app-sidebar-logo-default" />
+                            <img alt="Logo" src="assets/media/logos/default-small.svg" class="h-20px app-sidebar-logo-minimize" />
+                        </a>
+                        <!--end::Logo image-->
+                        
+                        <!--begin::Sidebar toggle-->
+                        <div id="kt_app_sidebar_toggle" class="app-sidebar-toggle btn btn-icon btn-shadow btn-sm btn-color-muted btn-active-color-primary body-bg h-30px w-30px position-absolute top-50 start-100 translate-middle rotate" data-kt-toggle="true" data-kt-toggle-state="active" data-kt-toggle-target="body" data-kt-toggle-name="app-sidebar-minimize">
+                            <span class="svg-icon svg-icon-2 rotate-180">
+                                <svg width="24" height="24" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                                    <path opacity="0.5" d="M14.2657 11.4343L18.45 7.25C18.8642 6.83579 18.8642 6.16421 18.45 5.75C18.0358 5.33579 17.3642 5.33579 16.95 5.75L11.4071 11.2929C11.0166 11.6834 11.0166 12.3166 11.4071 12.7071L16.95 18.25C17.3642 18.6642 18.0358 18.6642 18.45 18.25C18.8642 17.8358 18.8642 17.1642 18.45 16.75L14.2657 12.5657C13.9533 12.2533 13.9533 11.7467 14.2657 11.4343Z" fill="currentColor"/>
+                                    <path d="M8.2657 11.4343L12.45 7.25C12.8642 6.83579 12.8642 6.16421 12.45 5.75C12.0358 5.33579 11.3642 5.33579 10.95 5.75L5.40712 11.2929C5.01659 11.6834 5.01659 12.3166 5.40712 12.7071L10.95 18.25C11.3642 18.6642 12.0358 18.6642 12.45 18.25C12.8642 17.8358 12.8642 17.1642 12.45 16.75L8.2657 12.5657C7.95328 12.2533 7.95328 11.7467 8.2657 11.4343Z" fill="currentColor"/>
+                                </svg>
+                            </span>
+                        </div>
+                        <!--end::Sidebar toggle-->
+                    </div>
+                    <!--end::Logo-->
+                    
+                    <!--begin::sidebar menu-->
+                    <div class="app-sidebar-menu overflow-hidden flex-column-fluid">
+                        <!--begin::Menu wrapper-->
+                        <div id="kt_app_sidebar_menu_wrapper" class="app-sidebar-wrapper hover-scroll-overlay-y my-5" data-kt-scroll="true" data-kt-scroll-activate="true" data-kt-scroll-height="auto" data-kt-scroll-dependencies="#kt_app_sidebar_logo, #kt_app_sidebar_footer" data-kt-scroll-wrappers="#kt_app_sidebar_menu" data-kt-scroll-offset="5px" data-kt-scroll-save-state="true">
+                            <!--begin::Menu-->
+                            <div class="menu menu-column menu-rounded menu-sub-indention px-3" id="#kt_app_sidebar_menu" data-kt-menu="true" data-kt-menu-expand="false">
+                                <!--begin:Menu item-->
+                                <div class="menu-item">
+                                    <a class="menu-link active" href="index.html">
+                                        <span class="menu-icon">
+                                            <span class="svg-icon svg-icon-2">
+                                                <svg width="24" height="24" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                                                    <rect x="2" y="2" width="9" height="9" rx="2" fill="currentColor"/>
+                                                    <rect opacity="0.3" x="13" y="2" width="9" height="9" rx="2" fill="currentColor"/>
+                                                    <rect opacity="0.3" x="13" y="13" width="9" height="9" rx="2" fill="currentColor"/>
+                                                    <rect opacity="0.3" x="2" y="13" width="9" height="9" rx="2" fill="currentColor"/>
+                                                </svg>
+                                            </span>
+                                        </span>
+                                        <span class="menu-title">Dashboard</span>
+                                    </a>
+                                </div>
+                                <!--end:Menu item-->
+                                
+                                <!--begin:Menu item-->
+                                <div class="menu-item pt-5">
+                                    <div class="menu-content">
+                                        <span class="menu-heading fw-bold text-uppercase fs-7">WhatsApp</span>
+                                    </div>
+                                </div>
+                                <!--end:Menu item-->
+                                
+                                <!--begin:Menu item-->
+                                <div class="menu-item">
+                                    <a class="menu-link" href="#sessions">
+                                        <span class="menu-icon">
+                                            <span class="svg-icon svg-icon-2">
+                                                <svg width="24" height="24" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                                                    <path opacity="0.3" d="M21.25 18.525L13.05 21.825C12.35 22.125 11.65 22.125 10.95 21.825L2.75 18.525C1.75 18.125 1.75 16.725 2.75 16.325L4.04999 15.825L10.25 18.325C10.85 18.525 11.45 18.625 12.05 18.625C12.65 18.625 13.25 18.525 13.85 18.325L20.05 15.825L21.35 16.325C22.35 16.725 22.35 18.125 21.25 18.525ZM13.05 16.425L21.25 13.125C22.25 12.725 22.25 11.325 21.25 10.925L13.05 7.62502C12.35 7.32502 11.65 7.32502 10.95 7.62502L2.75 10.925C1.75 11.325 1.75 12.725 2.75 13.125L10.95 16.425C11.65 16.725 12.45 16.725 13.05 16.425Z" fill="currentColor"/>
+                                                    <path d="M11.05 11.025L2.84998 7.725C1.84998 7.325 1.84998 5.925 2.84998 5.525L11.05 2.225C11.75 1.925 12.45 1.925 13.15 2.225L21.35 5.525C22.35 5.925 22.35 7.325 21.35 7.725L13.05 11.025C12.45 11.325 11.65 11.325 11.05 11.025Z" fill="currentColor"/>
+                                                </svg>
+                                            </span>
+                                        </span>
+                                        <span class="menu-title">Sessions</span>
+                                    </a>
+                                </div>
+                                <!--end:Menu item-->
+                                
+                                <!--begin:Menu item-->
+                                <div class="menu-item">
+                                    <a class="menu-link" href="#messages">
+                                        <span class="menu-icon">
+                                            <span class="svg-icon svg-icon-2">
+                                                <svg width="24" height="24" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                                                    <path opacity="0.3" d="M20 3H4C2.89543 3 2 3.89543 2 5V16C2 17.1046 2.89543 18 4 18H4.5C5.05228 18 5.5 18.4477 5.5 19V21.5052C5.5 22.1441 6.21212 22.5253 6.74376 22.1708L11.4885 19.0077C12.4741 18.3506 13.6321 18 14.8167 18H20C21.1046 18 22 17.1046 22 16V5C22 3.89543 21.1046 3 20 3Z" fill="currentColor"/>
+                                                    <rect x="6" y="12" width="7" height="2" rx="1" fill="currentColor"/>
+                                                    <rect x="6" y="7" width="12" height="2" rx="1" fill="currentColor"/>
+                                                </svg>
+                                            </span>
+                                        </span>
+                                        <span class="menu-title">Send Message</span>
+                                    </a>
+                                </div>
+                                <!--end:Menu item-->
+                                
+                                <!--begin:Menu item-->
+                                <div class="menu-item">
+                                    <a class="menu-link" href="#logs">
+                                        <span class="menu-icon">
+                                            <span class="svg-icon svg-icon-2">
+                                                <svg width="24" height="24" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                                                    <path opacity="0.3" d="M19 22H5C4.4 22 4 21.6 4 21V3C4 2.4 4.4 2 5 2H14L20 8V21C20 21.6 19.6 22 19 22ZM15 17C15 16.4 14.6 16 14 16H8C7.4 16 7 16.4 7 17C7 17.6 7.4 18 8 18H14C14.6 18 15 17.6 15 17ZM17 12C17 11.4 16.6 11 16 11H8C7.4 11 7 11.4 7 12C7 12.6 7.4 13 8 13H16C16.6 13 17 12.6 17 12ZM17 7C17 6.4 16.6 6 16 6H8C7.4 6 7 6.4 7 7C7 7.6 7.4 8 8 8H16C16.6 8 17 7.6 17 7Z" fill="currentColor"/>
+                                                </svg>
+                                            </span>
+                                        </span>
+                                        <span class="menu-title">Activity Logs</span>
+                                    </a>
+                                </div>
+                                <!--end:Menu item-->
+                            </div>
+                            <!--end::Menu-->
+                        </div>
+                        <!--end::Menu wrapper-->
+                    </div>
+                    <!--end::sidebar menu-->
+                </div>
+                <!--end::Sidebar-->
+                
+                <!--begin::Main-->
+                <div class="app-main flex-column flex-row-fluid" id="kt_app_main">
+                    <!--begin::Content wrapper-->
+                    <div class="d-flex flex-column flex-column-fluid">
+                        <!--begin::Toolbar-->
+                        <div id="kt_app_toolbar" class="app-toolbar py-3 py-lg-6">
+                            <!--begin::Toolbar container-->
+                            <div id="kt_app_toolbar_container" class="app-container container-xxl d-flex flex-stack">
+                                <!--begin::Page title-->
+                                <div class="page-title d-flex flex-column justify-content-center flex-wrap me-3">
+                                    <!--begin::Title-->
+                                    <h1 class="page-heading d-flex text-dark fw-bold fs-3 flex-column justify-content-center my-0">WhatsApp Multi-Session Manager</h1>
+                                    <!--end::Title-->
+                                    <!--begin::Breadcrumb-->
+                                    <ul class="breadcrumb breadcrumb-separatorless fw-semibold fs-7 my-0 pt-1">
+                                        <li class="breadcrumb-item text-muted">
+                                            <a href="index.html" class="text-muted text-hover-primary">Home</a>
+                                        </li>
+                                        <li class="breadcrumb-item">
+                                            <span class="bullet bg-gray-400 w-5px h-2px"></span>
+                                        </li>
+                                        <li class="breadcrumb-item text-muted">Dashboard</li>
+                                    </ul>
+                                    <!--end::Breadcrumb-->
+                                </div>
+                                <!--end::Page title-->
+                            </div>
+                            <!--end::Toolbar container-->
+                        </div>
+                        <!--end::Toolbar-->
+                        
+                        <!--begin::Content-->
+                        <div id="kt_app_content" class="app-content flex-column-fluid">
+                            <!--begin::Content container-->
+                            <div id="kt_app_content_container" class="app-container container-xxl">
+                                
+                                <!--begin::Row - Session Manager-->
+                                <div class="row g-5 g-xl-10 mb-5 mb-xl-10">
+                                    <!--begin::Col-->
+                                    <div class="col-xl-12">
+                                        <!--begin::Card - Session Manager-->
+                                        <div class="card card-flush h-xl-100">
+                                            <!--begin::Card header-->
+                                            <div class="card-header pt-7">
+                                                <h3 class="card-title align-items-start flex-column">
+                                                    <span class="card-label fw-bold text-dark">🔧 Session Manager</span>
+                                                    <span class="text-muted mt-1 fw-semibold fs-7">Create and manage your WhatsApp sessions</span>
+                                                </h3>
+                                            </div>
+                                            <!--end::Card header-->
+                                            <!--begin::Card body-->
+                                            <div class="card-body pt-6">
+                                                <!--begin::Form-->
+                                                <div class="mb-10">
+                                                    <!--begin::Input group-->
+                                                    <div class="mb-3">
+                                                        <label class="form-label fw-semibold text-dark fs-6">New Session ID</label>
+                                                        <div class="input-group">
+                                                            <input type="text" id="new-session-id" class="form-control form-control-lg form-control-solid" placeholder="e.g., session1, wa-bot, my-account" autocomplete="off" />
+                                                            <button id="btn-create-session" class="btn btn-primary">
+                                                                <span class="svg-icon svg-icon-2">
+                                                                    <svg width="24" height="24" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                                                                        <rect opacity="0.5" x="11.364" y="20.364" width="16" height="2" rx="1" transform="rotate(-90 11.364 20.364)" fill="currentColor"/>
+                                                                        <rect x="4.36396" y="11.364" width="16" height="2" rx="1" fill="currentColor"/>
+                                                                    </svg>
+                                                                </span>
+                                                                Create Session
+                                                            </button>
+                                                        </div>
+                                                        <div class="form-text">Create a unique ID for each WhatsApp account</div>
+                                                    </div>
+                                                    <!--end::Input group-->
+                                                </div>
+                                                <!--end::Form-->
+
+                                                <!--begin::Sessions list-->
+                                                <div id="sessions-list">
+                                                    <div class="text-center text-muted py-10">
+                                                        <div class="mb-5">
+                                                            <span class="svg-icon svg-icon-5tx svg-icon-muted">
+                                                                <svg width="24" height="24" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                                                                    <path opacity="0.3" d="M21.25 18.525L13.05 21.825C12.35 22.125 11.65 22.125 10.95 21.825L2.75 18.525C1.75 18.125 1.75 16.725 2.75 16.325L4.04999 15.825L10.25 18.325C10.85 18.525 11.45 18.625 12.05 18.625C12.65 18.625 13.25 18.525 13.85 18.325L20.05 15.825L21.35 16.325C22.35 16.725 22.35 18.125 21.25 18.525ZM13.05 16.425L21.25 13.125C22.25 12.725 22.25 11.325 21.25 10.925L13.05 7.62502C12.35 7.32502 11.65 7.32502 10.95 7.62502L2.75 10.925C1.75 11.325 1.75 12.725 2.75 13.125L10.95 16.425C11.65 16.725 12.45 16.725 13.05 16.425Z" fill="currentColor"/>
+                                                                    <path d="M11.05 11.025L2.84998 7.725C1.84998 7.325 1.84998 5.925 2.84998 5.525L11.05 2.225C11.75 1.925 12.45 1.925 13.15 2.225L21.35 5.525C22.35 5.925 22.35 7.325 21.35 7.725L13.05 11.025C12.45 11.325 11.65 11.325 11.05 11.025Z" fill="currentColor"/>
+                                                                </svg>
+                                                            </span>
+                                                        </div>
+                                                        <p class="fw-semibold fs-6">No sessions yet. Create one above.</p>
+                                                    </div>
+                                                </div>
+                                                <!--end::Sessions list-->
+                                            </div>
+                                            <!--end::Card body-->
+                                        </div>
+                                        <!--end::Card - Session Manager-->
+                                    </div>
+                                    <!--end::Col-->
+                                </div>
+                                <!--end::Row-->
+
+            <!-- Connection Panel -->
+            <div class="card">
+                <h2>🔌 Connection</h2>
+                
+                <div class="form-group">
+                    <label for="session-selector">Select Active Session</label>
+                    <select id="session-selector" class="input select" disabled>
+                        <option value="">No sessions available</option>
+                    </select>
+                    <small>Choose which session to connect</small>
+                </div>
+                
+                <div id="status-indicator" class="status-badge disconnected">
+                    <span class="status-dot"></span>
+                    <span id="status-text">Disconnected</span>
+                </div>
+
+                <div id="connection-panel" class="connection-panel">
+                    <div class="tabs">
+                        <button class="tab-btn active" data-tab="qr">QR Code</button>
+                        <button class="tab-btn" data-tab="pairing">Pairing Code</button>
+                    </div>
+
+                    <!-- QR Code Tab -->
+                    <div id="qr-tab" class="tab-content active">
+                        <div class="qr-container">
+                            <div id="qr-placeholder" class="qr-placeholder">
+                                <svg xmlns="http://www.w3.org/2000/svg" width="150" height="150" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                                    <rect x="3" y="3" width="7" height="7"></rect>
+                                    <rect x="14" y="3" width="7" height="7"></rect>
+                                    <rect x="14" y="14" width="7" height="7"></rect>
+                                    <rect x="3" y="14" width="7" height="7"></rect>
+                                </svg>
+                                <p>Click "Connect with QR" to generate QR Code</p>
+                            </div>
+                            <div id="qr-code" class="qr-code" style="display: none;"></div>
+                        </div>
+                        <button id="btn-qr" class="btn btn-primary">
+                            <span>📷 Connect with QR Code</span>
+                        </button>
+                    </div>
+
+                    <!-- Pairing Code Tab -->
+                    <div id="pairing-tab" class="tab-content">
+                        <div class="form-group">
+                            <label for="phone-number">Phone Number (with country code)</label>
+                            <input 
+                                type="text" 
+                                id="phone-number" 
+                                class="input" 
+                                placeholder="e.g., 628123456789"
+                                autocomplete="off"
+                            >
+                            <small>Enter phone number without + or spaces</small>
+                        </div>
+                        <div id="pairing-code-display" class="pairing-code-display" style="display: none;">
+                            <label>Your Pairing Code:</label>
+                            <div class="pairing-code" id="pairing-code"></div>
+                            <small>Enter this code in WhatsApp > Linked Devices</small>
+                        </div>
+                        <button id="btn-pairing" class="btn btn-primary">
+                            <span>🔗 Get Pairing Code</span>
+                        </button>
+                    </div>
+
+                    <div id="user-info" class="user-info" style="display: none;">
+                        <div class="user-avatar" id="user-avatar">
+                            <span id="user-initial">?</span>
+                        </div>
+                        <div class="user-details">
+                            <div class="user-name" id="user-name">-</div>
+                            <div class="user-number" id="user-number">-</div>
+                        </div>
+                        <button id="btn-logout" class="btn btn-danger btn-sm">Logout</button>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Send Message Panel -->
+            <div class="card">
+                <h2>💬 Send Message</h2>
+                
+                <div class="form-group">
+                    <label for="send-session-selector">Select Session to Send From</label>
+                    <select id="send-session-selector" class="input select" disabled>
+                        <option value="">No connected sessions</option>
+                    </select>
+                </div>
+                
+                <div id="send-message-panel">
+                    <div class="form-group">
+                        <label for="recipient-phone">Recipient Phone Number</label>
+                        <input 
+                            type="text" 
+                            id="recipient-phone" 
+                            class="input" 
+                            placeholder="e.g., 628123456789"
+                            autocomplete="off"
+                        >
+                        <small>Include country code without + or @s.whatsapp.net</small>
+                    </div>
+
+                    <div class="form-group">
+                        <label for="message-text">Message</label>
+                        <textarea 
+                            id="message-text" 
+                            class="textarea" 
+                            rows="5" 
+                            placeholder="Type your message here..."
+                        ></textarea>
+                    </div>
+
+                    <button id="btn-send" class="btn btn-success" disabled>
+                        <span>📤 Send Message</span>
+                    </button>
+                </div>
+
+                <div id="message-status" class="message-status"></div>
+            </div>
+
+            <!-- Activity Log -->
+            <div class="card">
+                <h2>📋 Activity Log</h2>
+                <div id="activity-log" class="activity-log">
+                    <div class="log-item info">
+                        <span class="log-time">--:--:--</span>
+                        <span class="log-message">Waiting for connection...</span>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script src="/socket.io/socket.io.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/qrcode@1.5.3/build/qrcode.min.js"></script>
+    <script src="app.js"></script>
+</body>
+</html>
