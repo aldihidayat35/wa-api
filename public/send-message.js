@@ -177,13 +177,69 @@ socket.on('session-status', (data) => {
 })
 
 socket.on('message-sent', (data) => {
+    console.log('📨 Message sent event received:', data)
     addProgressLog(`✅ Message sent to ${data.to}`, 'success')
+    updateProgress()
+    
+    // Auto-log to database
+    if (data.messageContent) {
+        logActivity('message', 'Pesan Text Terkirim', `Pesan terkirim ke ${data.to}`, {
+            sessionId: data.sessionId,
+            recipient: data.to,
+            messageType: 'text',
+            messageContent: data.messageContent,
+            timestamp: new Date().toISOString()
+        })
+    }
+})
+
+socket.on('image-sent', (data) => {
+    console.log('📸 Image sent event received:', data)
+    addProgressLog(`✅ Image sent to ${data.to}`, 'success')
+    updateProgress()
+    
+    // Auto-log to database
+    logActivity('message', 'Gambar Terkirim', `Gambar terkirim ke ${data.to}`, {
+        sessionId: data.sessionId,
+        recipient: data.to,
+        messageType: 'image',
+        caption: data.caption || '',
+        filename: data.filename || '',
+        timestamp: new Date().toISOString()
+    })
+})
+
+socket.on('media-sent', (data) => {
+    console.log('🖼️ Media sent event received:', data)
+    addProgressLog(`✅ Media sent to ${data.to}`, 'success')
     updateProgress()
 })
 
 socket.on('error', (error) => {
+    console.error('❌ Socket error:', error)
     addProgressLog(`❌ Error: ${error}`, 'error')
     showStatus(`Error: ${error}`, 'danger')
+    
+    // Auto-log error to database
+    logActivity('error', 'Error Pengiriman Pesan', `Error: ${error}`, {
+        sessionId: currentSessionId,
+        errorMessage: error,
+        timestamp: new Date().toISOString()
+    })
+})
+
+socket.on('send-error', (data) => {
+    console.error('❌ Send error:', data)
+    addProgressLog(`❌ Failed to send to ${data.phone}: ${data.error}`, 'error')
+    showStatus(`Send failed: ${data.error}`, 'danger')
+    
+    // Auto-log error to database
+    logActivity('error', 'Gagal Mengirim Pesan', `Gagal mengirim ke ${data.phone}: ${data.error}`, {
+        sessionId: currentSessionId,
+        recipient: data.phone,
+        errorMessage: data.error,
+        timestamp: new Date().toISOString()
+    })
 })
 
 // Update Session Selector
@@ -411,15 +467,22 @@ async function sendSingleMessage(isImage) {
     const phone = singlePhoneInput.value.trim()
     const text = messageText.value.trim()
     
+    console.log('📤 Sending single message:', { isImage, phone, hasText: !!text, hasImage: !!imageInput.files[0] })
+    
     try {
         if (isImage && imageInput.files[0]) {
+            console.log('📸 Sending image message...')
             await sendImageMessage(phone, text)
+            console.log('✅ Image message sent successfully')
         } else {
+            console.log('📝 Sending text message...')
             socket.emit('send-message', {
                 sessionId: currentSessionId,
                 phone: phone,
-                message: text
+                message: text,
+                messageContent: text // Pass message content for logging
             })
+            console.log('✅ Text message emitted')
         }
         
         showStatus('Message sent successfully!', 'success')
@@ -432,7 +495,8 @@ async function sendSingleMessage(isImage) {
             imagePreview.style.display = 'none'
         }
         
-    } catch (error) {
+        } catch (error) {
+        console.error('❌ Error sending message:', error)
         showStatus(`Error: ${error.message}`, 'danger')
     } finally {
         isSending = false
@@ -459,14 +523,21 @@ async function sendBulkMessages(isImage) {
             // Personalize message (replace {name} with phone number or name if available)
             const personalizedText = text.replace('{name}', phone)
             
+            console.log(`📤 Sending bulk message ${i + 1}/${recipients.length} to ${phone}`)
+            
             if (isImage && imageInput.files[0]) {
+                console.log('📸 Sending image...')
                 await sendImageMessage(phone, personalizedText)
+                console.log('✅ Image sent')
             } else {
+                console.log('📝 Sending text...')
                 socket.emit('send-message', {
                     sessionId: currentSessionId,
                     phone: phone,
-                    message: personalizedText
+                    message: personalizedText,
+                    messageContent: personalizedText // Pass for logging
                 })
+                console.log('✅ Text emitted')
             }
             
             sent++
@@ -500,25 +571,53 @@ async function sendBulkMessages(isImage) {
 async function sendImageMessage(phone, caption) {
     return new Promise((resolve, reject) => {
         const file = imageInput.files[0]
+        
+        if (!file) {
+            reject(new Error('No image file selected'))
+            return
+        }
+        
+        console.log('📸 Preparing to send image:', file.name, 'Size:', file.size, 'Type:', file.type)
+        
         const reader = new FileReader()
         
         reader.onload = function(e) {
-            const imageData = e.target.result
-            
-            socket.emit('send-image', {
-                sessionId: currentSessionId,
-                phone: phone,
-                image: imageData,
-                caption: caption
-            })
-            
-            resolve()
+            try {
+                const imageData = e.target.result
+                
+                // Remove data URL prefix to get base64 only
+                const base64Data = imageData.split(',')[1]
+                
+                console.log('📦 Image data prepared, size:', base64Data.length, 'bytes')
+                console.log('🚀 Emitting send-image event...')
+                
+                // Emit with base64 data (without data URL prefix)
+                socket.emit('send-image', {
+                    sessionId: currentSessionId,
+                    phone: phone,
+                    image: base64Data,
+                    caption: caption || '',
+                    mimetype: file.type,
+                    filename: file.name
+                })
+                
+                console.log('✅ Image send event emitted')
+                
+                // Wait a bit for socket to process
+                setTimeout(() => resolve(), 500)
+                
+            } catch (error) {
+                console.error('❌ Error processing image:', error)
+                reject(error)
+            }
         }
         
         reader.onerror = function(error) {
-            reject(error)
+            console.error('❌ Error reading image file:', error)
+            reject(new Error('Failed to read image file: ' + error.message))
         }
         
+        // Read as data URL (base64)
         reader.readAsDataURL(file)
     })
 }
@@ -550,6 +649,53 @@ function showStatus(message, type) {
 // Sleep utility
 function sleep(ms) {
     return new Promise(resolve => setTimeout(resolve, ms))
+}
+
+// Log Activity to Database
+async function logActivity(type, title, description, metadata = {}) {
+    console.log('📝 Logging activity:', title)
+    
+    const requestData = {
+        log_type: type,
+        title: title,
+        description: description,
+        session_id: metadata.sessionId || null,
+        phone_number: metadata.recipient || metadata.sender || null,
+        metadata: metadata
+    }
+    
+    console.log('📦 Activity data:', requestData)
+    console.log('🌐 API URL:', 'http://localhost/Baileys/api/logs/create.php')
+    
+    try {
+        const response = await fetch('http://localhost/Baileys/api/logs/create.php', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json'
+            },
+            body: JSON.stringify(requestData)
+        })
+        
+        console.log('📡 Response status:', response.status, response.statusText)
+        
+        if (!response.ok) {
+            const errorText = await response.text()
+            console.error('❌ HTTP Error:', response.status, errorText.substring(0, 200))
+            return
+        }
+        
+        const data = await response.json()
+        console.log('📥 Response data:', data)
+        
+        if (data.success) {
+            console.log('✅ Activity logged successfully! ID:', data.data?.id)
+        } else {
+            console.error('❌ API returned error:', data.message, data.errors)
+        }
+    } catch (error) {
+        console.error('❌ Error logging activity:', error.message)
+        console.error('Stack:', error.stack)
+    }
 }
 
 // Make removeRecipient available globally

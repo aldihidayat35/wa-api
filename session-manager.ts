@@ -209,6 +209,45 @@ export class SessionManager {
 		await session.sock.sendMessage(jid, { text: message })
 	}
 
+	async sendImage(
+		sessionId: string,
+		phone: string,
+		imageBuffer: Buffer,
+		caption?: string,
+		mimetype?: string,
+		filename?: string
+	): Promise<void> {
+		const session = this.getSession(sessionId)
+		
+		if (!session || !session.sock || !session.isConnected) {
+			throw new Error('Session not connected')
+		}
+
+		const jid = phone.includes('@s.whatsapp.net')
+			? phone
+			: `${phone.replace(/[^0-9]/g, '')}@s.whatsapp.net`
+
+		const messageContent: AnyMessageContent = {
+			image: imageBuffer,
+		}
+
+		if (caption) {
+			messageContent.caption = caption
+		}
+
+		if (mimetype) {
+			messageContent.mimetype = mimetype
+		}
+
+		if (filename) {
+			messageContent.fileName = filename
+		}
+
+		console.log('📤 Sending image to', jid, 'size:', imageBuffer.length, 'bytes')
+		await session.sock.sendMessage(jid, messageContent)
+		console.log('✅ Image sent successfully')
+	}
+
 	async logout(sessionId: string): Promise<void> {
 		const session = this.getSession(sessionId)
 		

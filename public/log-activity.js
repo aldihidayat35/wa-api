@@ -217,6 +217,56 @@ function addLog(type, title, description, metadata = {}) {
     updateStats()
     saveLogsToStorage()
     applyFilters()
+    
+    // Save to database (async, don't wait)
+    saveLogToDatabase(log)
+}
+
+// Save Log to Database via API
+async function saveLogToDatabase(log) {
+    console.log('📝 Attempting to save log to database:', log.title)
+    
+    const requestData = {
+        log_type: log.type,
+        title: log.title,
+        description: log.description,
+        session_id: log.metadata.sessionId || null,
+        phone_number: log.metadata.recipient || log.metadata.sender || log.metadata.phone || null,
+        metadata: log.metadata
+    }
+    
+    console.log('📦 Request data:', requestData)
+    console.log('🌐 API URL:', 'http://localhost/Baileys/api/logs/create.php')
+    
+    try {
+        const response = await fetch('http://localhost/Baileys/api/logs/create.php', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json'
+            },
+            body: JSON.stringify(requestData)
+        })
+        
+        console.log('📡 Response status:', response.status, response.statusText)
+        
+        if (!response.ok) {
+            const errorText = await response.text()
+            console.error('❌ HTTP Error:', response.status, errorText)
+            return
+        }
+        
+        const data = await response.json()
+        console.log('📥 Response data:', data)
+        
+        if (data.success) {
+            console.log('✅ Log saved to database successfully! ID:', data.data?.id)
+        } else {
+            console.error('❌ API returned error:', data.message, data.errors)
+        }
+    } catch (error) {
+        console.error('❌ Error saving log to database:', error.message)
+        console.error('Stack:', error.stack)
+    }
 }
 
 // Apply Filters
@@ -420,49 +470,132 @@ function loadLogsFromStorage() {
             updateStats()
             applyFilters()
             
-            addLog('system', 'Log Dimuat', `${allLogs.length} log aktivitas sebelumnya berhasil dimuat`)
+            addLog('system', 'Log Dimuat', `${allLogs.length} log aktivitas sebelumnya berhasil dimuat dari LocalStorage`)
         }
+        
+        // Also load from database
+        loadLogsFromDatabase()
     } catch (error) {
         console.error('Failed to load logs:', error)
     }
 }
 
+// Load Logs from Database
+async function loadLogsFromDatabase() {
+    try {
+        const response = await fetch('http://localhost/Baileys/api/logs/get.php?log_type=all&limit=500&offset=0')
+        const data = await response.json()
+        
+        if (data.success && data.data && data.data.logs && data.data.logs.length > 0) {
+            // Merge database logs with local logs (avoid duplicates)
+            const dbLogs = data.data.logs.map(log => {
+                let metadata = {}
+                try {
+                    metadata = typeof log.metadata === 'string' ? JSON.parse(log.metadata) : (log.metadata || {})
+                } catch (e) {
+                    metadata = {}
+                }
+                
+                return {
+                    id: 'db_' + log.id,
+                    type: log.log_type,
+                    title: log.title,
+                    description: log.description,
+                    metadata: metadata,
+                    timestamp: log.created_at,
+                    humanTime: formatHumanTime(new Date(log.created_at))
+                }
+            })
+            
+            // Create a map of existing logs by timestamp + title for faster lookup
+            const existingLogsMap = new Map()
+            allLogs.forEach(log => {
+                const key = `${log.title}_${new Date(log.timestamp).getTime()}`
+                existingLogsMap.set(key, true)
+            })
+            
+            // Only add logs that don't exist in local storage
+            let newLogsAdded = 0
+            dbLogs.forEach(dbLog => {
+                const key = `${dbLog.title}_${new Date(dbLog.timestamp).getTime()}`
+                if (!existingLogsMap.has(key)) {
+                    allLogs.push(dbLog)
+                    newLogsAdded++
+                }
+            })
+            
+            // Sort by timestamp (newest first)
+            allLogs.sort((a, b) => new Date(b.timestamp) - new Date(a.timestamp))
+            
+            // Recalculate stats
+            recalculateStats()
+            applyFilters()
+            
+            console.log(`✅ Loaded ${data.data.logs.length} logs from database (${newLogsAdded} new)`)
+        } else {
+            console.log('ℹ️ No logs found in database')
+        }
+    } catch (error) {
+        console.error('❌ Error loading logs from database:', error)
+    }
+}
+
+// Recalculate Statistics
+function recalculateStats() {
+    stats.messages = allLogs.filter(log => log.type === 'message').length
+    stats.errors = allLogs.filter(log => log.type === 'error').length
+    stats.total = allLogs.length
+    updateStats()
+}
+
 // Export Logs
 function exportLogs() {
-    const exportData = {
-        exported_at: new Date().toISOString(),
-        total_logs: allLogs.length,
-        statistics: stats,
-        logs: allLogs
-    }
+    // Export from database via API
+    const format = confirm('Export sebagai CSV?\n\nOK = CSV\nCancel = JSON') ? 'csv' : 'json'
     
-    const dataStr = JSON.stringify(exportData, null, 2)
-    const dataBlob = new Blob([dataStr], { type: 'application/json' })
+    const exportUrl = `../api/logs/export.php?format=${format}&log_type=${currentFilter}`
     
-    const url = URL.createObjectURL(dataBlob)
-    const link = document.createElement('a')
-    link.href = url
-    link.download = `whatsapp-logs-${new Date().toISOString().split('T')[0]}.json`
-    document.body.appendChild(link)
-    link.click()
-    document.body.removeChild(link)
-    URL.revokeObjectURL(url)
+    // Open in new window to trigger download
+    window.open(exportUrl, '_blank')
     
-    addLog('system', 'Log Diekspor', `${allLogs.length} log telah diekspor ke file JSON`)
+    addLog('system', 'Log Diekspor', `Log telah diekspor dalam format ${format.toUpperCase()}`)
 }
 
 // Clear All Logs
-function clearAllLogs() {
-    if (confirm('Apakah Anda yakin ingin menghapus semua log aktivitas?\n\nTindakan ini tidak dapat dibatalkan!')) {
-        allLogs = []
-        stats = { messages: 0, sessions: 0, errors: 0, total: 0 }
-        updateStats()
-        saveLogsToStorage()
-        applyFilters()
-        
-        setTimeout(() => {
-            addLog('system', 'Log Dibersihkan', 'Semua log aktivitas telah dihapus')
-        }, 100)
+async function clearAllLogs() {
+    if (confirm('Apakah Anda yakin ingin menghapus semua log aktivitas?\n\nLog di database juga akan dihapus!\n\nTindakan ini tidak dapat dibatalkan!')) {
+        try {
+            // Clear from database
+            const response = await fetch('http://localhost/Baileys/api/logs/clear.php', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json'
+                },
+                body: JSON.stringify({
+                    action: 'all'
+                })
+            })
+            
+            const data = await response.json()
+            
+            if (data.success) {
+                // Clear local storage
+                allLogs = []
+                stats = { messages: 0, sessions: 0, errors: 0, total: 0 }
+                updateStats()
+                saveLogsToStorage()
+                applyFilters()
+                
+                setTimeout(() => {
+                    addLog('system', 'Log Dibersihkan', `${data.data.deleted_count || 0} log aktivitas telah dihapus dari database`)
+                }, 100)
+            } else {
+                alert('Gagal menghapus log dari database: ' + data.message)
+            }
+        } catch (error) {
+            console.error('❌ Error clearing logs:', error)
+            alert('Terjadi kesalahan saat menghapus log')
+        }
     }
 }
 

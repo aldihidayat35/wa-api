@@ -16,6 +16,7 @@ const sessionManager = new SessionManager(io)
 
 // Serve static files
 app.use(express.static('public'))
+app.use('/api', express.static('api')) // Serve API folder
 app.use(express.json())
 
 // Main route
@@ -92,15 +93,48 @@ io.on('connection', (socket) => {
 	})
 
 	// Send message
-	socket.on('send-message', async (data: { sessionId: string, phone: string, message: string }) => {
+	socket.on('send-message', async (data: { sessionId: string, phone: string, message: string, messageContent?: string }) => {
 		try {
 			await sessionManager.sendMessage(data.sessionId, data.phone, data.message)
+			socket.emit('message-sent', { 
+				success: true, 
+				sessionId: data.sessionId,
+				to: data.phone,
+				messageContent: data.messageContent || data.message // Include message content for logging
+			})
+		} catch (error: any) {
+			socket.emit('error', error.message)
+		}
+	})
+
+	// Handle image/media sending
+	socket.on('send-image', async (data: { sessionId: string, phone: string, image: string, caption?: string, mimetype?: string, filename?: string }) => {
+		try {
+			console.log('📸 Received send-image request for', data.phone)
+			
+			// Convert base64 to buffer
+			const imageBuffer = Buffer.from(data.image, 'base64')
+			
+			await sessionManager.sendImage(data.sessionId, data.phone, imageBuffer, data.caption || '', data.mimetype, data.filename)
+			
+			socket.emit('image-sent', { 
+				success: true, 
+				sessionId: data.sessionId,
+				to: data.phone,
+				caption: data.caption || '',
+				filename: data.filename || ''
+			})
 			socket.emit('message-sent', { 
 				success: true, 
 				sessionId: data.sessionId,
 				to: data.phone 
 			})
 		} catch (error: any) {
+			console.error('❌ Error sending image:', error.message)
+			socket.emit('send-error', { 
+				phone: data.phone, 
+				error: error.message 
+			})
 			socket.emit('error', error.message)
 		}
 	})
