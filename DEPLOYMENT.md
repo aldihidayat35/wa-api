@@ -128,7 +128,7 @@ sudo apt install -y nginx
 
 # 9. Install SSL (gratis dari Let's Encrypt)
 sudo apt install -y certbot python3-certbot-nginx
-sudo certbot --nginx -d waapi.demoj35.site
+sudo certbot --nginx -d jokiin35.site
 ```
 
 ---
